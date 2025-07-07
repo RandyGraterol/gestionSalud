@@ -14,7 +14,7 @@ interface RegisterFormProps {
     password: string;
     name: string;
     email: string;
-    role: 'patient' | 'medical_staff';
+    role: 'admin' | 'patient' | 'medical_staff';
   }) => void;
 }
 
@@ -25,7 +25,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onBackToLogin, onRegister }
     confirmPassword: '',
     name: '',
     email: '',
-    role: 'patient' as 'patient' | 'medical_staff'
+    role: 'patient' as 'admin' | 'patient' | 'medical_staff'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -128,11 +128,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onBackToLogin, onRegister }
                   <Label htmlFor="role" className="text-blue-900 text-sm font-medium">
                     Tipo de Usuario
                   </Label>
-                  <Select value={formData.role} onValueChange={(value: 'patient' | 'medical_staff') => handleInputChange('role', value)}>
+                  <Select value={formData.role} onValueChange={(value: 'admin' | 'patient' | 'medical_staff') => handleInputChange('role', value)}>
                     <SelectTrigger className="border-blue-200 focus:border-blue-500 h-9 sm:h-10 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="patient">Paciente</SelectItem>
                       <SelectItem value="medical_staff">Personal Médico</SelectItem>
                     </SelectContent>

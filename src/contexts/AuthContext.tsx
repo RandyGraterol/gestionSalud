@@ -1,7 +1,17 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@/types';
-import { getSession, saveSession, clearSession, getUsers, saveUser } from '@/services/localStorage';
+import { 
+  getSession, 
+  saveSession, 
+  clearSession, 
+  getUsers, 
+  saveUser, 
+  verifyCredentials,
+  getUserByEmail,
+  userExistsByEmail,
+  userExistsByUsername
+} from '@/services/localStorage';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -13,8 +23,10 @@ interface AuthContextType {
     password: string;
     name: string;
     email: string;
-    role: 'patient' | 'medical_staff';
+    role: 'admin' | 'patient' | 'medical_staff';
   }) => boolean;
+  resetPassword: (email: string, newPassword: string) => boolean;
+  verifyUserExists: (email: string) => boolean;
   isAuthenticated: boolean;
 }
 
@@ -25,36 +37,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    // Recuperar sesión guardada
     const savedSession = getSession();
     if (savedSession) {
       setSession(savedSession);
     }
+
+    // Listen for localStorage changes for synchronization
+    const handleStorageChange = (e: CustomEvent) => {
+      if (e.detail.key === 'medical_system_session') {
+        const newSession = getSession();
+        setSession(newSession);
+      }
+    };
+
+    window.addEventListener('localStorageChange', handleStorageChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('localStorageChange', handleStorageChange as EventListener);
+    };
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    // Credenciales predefinidas - Solo admin y paciente
-    const predefinedUsers = [
-      { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrador del Sistema Hospitalario' },
-      { username: 'cliente', password: 'cliente123', role: 'patient', name: 'Juan Pérez' }
-    ];
+  const verifyUserExists = (email: string): boolean => {
+    return userExistsByEmail(email);
+  };
 
-    // Verificar usuarios predefinidos
-    let user = predefinedUsers.find(u => u.username === username && u.password === password);
+  const resetPassword = (email: string, newPassword: string): boolean => {
+    const user = getUserByEmail(email);
     
-    // Si no es un usuario predefinido, verificar usuarios registrados
-    if (!user) {
-      const registeredUsers = getUsers();
-      const registeredUser = registeredUsers.find(u => u.username === username && u.password === password);
+    if (user) {
+      const users = getUsers();
+      const userIndex = users.findIndex(u => u.email === email);
       
-      if (registeredUser) {
-        user = {
-          username: registeredUser.username,
-          password: registeredUser.password,
-          role: registeredUser.role,
-          name: registeredUser.name
-        };
+      if (userIndex >= 0) {
+        users[userIndex].password = newPassword;
+        localStorage.setItem('medical_system_users', JSON.stringify(users));
+        
+        toast({
+          title: "Contraseña restablecida",
+          description: "Tu contraseña ha sido actualizada correctamente",
+        });
+        
+        return true;
       }
     }
+
+    toast({
+      title: "Error",
+      description: "No se encontró un usuario con ese email",
+      variant: "destructive",
+    });
+    
+    return false;
+  };
+
+  const login = (username: string, password: string): boolean => {
+    const user = verifyCredentials(username, password);
     
     if (user) {
       const newSession: Session = {
@@ -89,30 +127,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string;
     name: string;
     email: string;
-    role: 'patient' | 'medical_staff';
+    role: 'admin' | 'patient' | 'medical_staff';
   }): boolean => {
-    const existingUsers = getUsers();
-    
     // Verificar si el usuario ya existe
-    const userExists = existingUsers.some(user => 
-      user.username === userData.username || user.email === userData.email
-    );
-
-    if (userExists) {
+    if (userExistsByUsername(userData.username)) {
       toast({
         title: "Error de registro",
-        description: "El usuario o email ya existe",
+        description: "El nombre de usuario ya está en uso",
         variant: "destructive",
       });
       return false;
     }
 
-    // Crear nuevo usuario (solo pacientes pueden registrarse)
+    if (userExistsByEmail(userData.email)) {
+      toast({
+        title: "Error de registro",
+        description: "El email ya está registrado",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Crear nuevo usuario
     const newUser: User = {
       id: Date.now().toString(),
       username: userData.username,
       password: userData.password,
-      role: 'patient', // Forzar rol de paciente para nuevos registros
+      role: userData.role,
       name: userData.name,
       email: userData.email,
       createdAt: new Date().toISOString(),
@@ -145,6 +186,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login, 
         logout, 
         register,
+        resetPassword,
+        verifyUserExists,
         isAuthenticated: !!session 
       }}
     >

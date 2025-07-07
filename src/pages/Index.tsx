@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import LoginForm from '@/components/auth/LoginForm';
 import Dashboard from '@/components/dashboard/Dashboard';
 import PatientDashboard from '@/components/patient-dashboard/PatientDashboard';
+import MedicalDashboard from '@/components/medical-dashboard/MedicalDashboard';
 
 const Index: React.FC = () => {
   const { isAuthenticated, session } = useAuth();
@@ -19,8 +20,7 @@ const Index: React.FC = () => {
     case 'patient':
       return <PatientDashboard />;
     case 'medical_staff':
-      // Los usuarios de medical_staff ahora van al dashboard de admin
-      return <Dashboard />;
+      return <MedicalDashboard />;
     default:
       return <LoginForm />;
   }

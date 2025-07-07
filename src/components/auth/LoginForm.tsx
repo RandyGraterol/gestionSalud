@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import RegisterForm from './RegisterForm';
+import ResetPasswordForm from './ResetPasswordForm';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
+  const [currentView, setCurrentView] = useState<'login' | 'register' | 'reset'>('login');
   const { login, register } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,25 +34,23 @@ const LoginForm: React.FC = () => {
   }) => {
     const success = register(userData);
     if (success) {
-      setShowRegister(false);
+      setCurrentView('login');
     }
   };
 
-  const fillCredentials = (user: 'admin' | 'cliente') => {
-    if (user === 'admin') {
-      setUsername('admin');
-      setPassword('admin123');
-    } else if (user === 'cliente') {
-      setUsername('cliente');
-      setPassword('cliente123');
-    }
-  };
-
-  if (showRegister) {
+  if (currentView === 'register') {
     return (
       <RegisterForm 
-        onBackToLogin={() => setShowRegister(false)}
+        onBackToLogin={() => setCurrentView('login')}
         onRegister={handleRegister}
+      />
+    );
+  }
+
+  if (currentView === 'reset') {
+    return (
+      <ResetPasswordForm 
+        onBackToLogin={() => setCurrentView('login')}
       />
     );
   }
@@ -98,6 +97,18 @@ const LoginForm: React.FC = () => {
                   className="border-blue-200 focus:border-blue-500 h-10 text-sm"
                 />
               </div>
+              
+              {/* Enlace para restablecer contraseña */}
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('reset')}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 text-sm lg:text-base"
@@ -111,47 +122,12 @@ const LoginForm: React.FC = () => {
               <p className="text-sm text-blue-600 mb-3">
                 ¿No tienes cuenta?{' '}
                 <button
-                  onClick={() => setShowRegister(true)}
+                  onClick={() => setCurrentView('register')}
                   className="font-medium text-blue-700 hover:text-blue-800 underline"
                 >
                   Regístrate aquí
                 </button>
               </p>
-            </div>
-            
-            {/* Credenciales de prueba */}
-            <div className="space-y-3">
-              <div className="border-t border-blue-100 pt-3">
-                <p className="text-xs text-blue-700 font-medium text-center mb-2">
-                  Credenciales de prueba:
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fillCredentials('admin')}
-                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 h-auto py-2 flex flex-col items-center justify-center"
-                >
-                  <span className="text-sm mb-0.5">🏥</span>
-                  <span className="font-medium text-xs leading-tight">Panel Administrador/Médico</span>
-                  <span className="text-xs opacity-75 leading-tight">admin / admin123</span>
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fillCredentials('cliente')}
-                  className="w-full border-green-200 text-green-700 hover:bg-green-50 h-auto py-2 flex flex-col items-center justify-center"
-                >
-                  <span className="text-sm mb-0.5">👤</span>
-                  <span className="font-medium text-xs leading-tight">Panel Paciente</span>
-                  <span className="text-xs opacity-75 leading-tight">cliente / cliente123</span>
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>

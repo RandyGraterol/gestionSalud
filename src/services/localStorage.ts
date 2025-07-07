@@ -1,19 +1,86 @@
-import { User, Patient, MedicalStaff, Specialty, WorkShift, WorkSchedule, Appointment, Session } from '@/types';
 
-const STORAGE_KEYS = {
-  USERS: 'medical_system_users',
-  PATIENTS: 'medical_system_patients',
-  MEDICAL_STAFF: 'medical_system_medical_staff',
-  SPECIALTIES: 'medical_system_specialties',
-  WORK_SHIFTS: 'medical_system_work_shifts',
-  WORK_SCHEDULES: 'medical_system_work_schedules',
-  APPOINTMENTS: 'medical_system_appointments',
-  SESSION: 'medical_system_session',
+import { User, Session, Patient, MedicalStaff, Specialty, WorkShift, WorkSchedule, Appointment } from '@/types';
+
+const USERS_KEY = 'medical_system_users';
+const SESSION_KEY = 'medical_system_session';
+
+// Obtener todos los usuarios
+export const getUsers = (): User[] => {
+  const users = localStorage.getItem(USERS_KEY);
+  return users ? JSON.parse(users) : [];
 };
 
-// Generic localStorage functions
+// Guardar un nuevo usuario
+export const saveUser = (user: User): void => {
+  const users = getUsers();
+  users.push(user);
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+};
+
+// Actualizar un usuario existente
+export const updateUser = (updatedUser: User): void => {
+  const users = getUsers();
+  const userIndex = users.findIndex(u => u.id === updatedUser.id);
+  if (userIndex >= 0) {
+    users[userIndex] = updatedUser;
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+};
+
+// Obtener usuario por username
+export const getUserByUsername = (username: string): User | undefined => {
+  const users = getUsers();
+  return users.find(u => u.username === username);
+};
+
+// Obtener usuario por email
+export const getUserByEmail = (email: string): User | undefined => {
+  const users = getUsers();
+  return users.find(u => u.email === email);
+};
+
+// Verificar credenciales de login
+export const verifyCredentials = (username: string, password: string): User | null => {
+  const users = getUsers();
+  const user = users.find(u => u.username === username && u.password === password);
+  return user || null;
+};
+
+// Guardar sesión
+export const saveSession = (session: Session): void => {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+};
+
+// Obtener sesión actual
+export const getSession = (): Session | null => {
+  const session = localStorage.getItem(SESSION_KEY);
+  return session ? JSON.parse(session) : null;
+};
+
+// Limpiar sesión
+export const clearSession = (): void => {
+  localStorage.removeItem(SESSION_KEY);
+};
+
+// Verificar si un usuario existe por email
+export const userExistsByEmail = (email: string): boolean => {
+  const users = getUsers();
+  return users.some(u => u.email === email);
+};
+
+// Verificar si un usuario existe por username
+export const userExistsByUsername = (username: string): boolean => {
+  const users = getUsers();
+  return users.some(u => u.username === username);
+};
+
+// Generic localStorage functions with event listeners for synchronization
 export const saveToLocalStorage = (key: string, data: any): void => {
   localStorage.setItem(key, JSON.stringify(data));
+  // Dispatch custom event for synchronization
+  window.dispatchEvent(new CustomEvent('localStorageChange', { 
+    detail: { key, data } 
+  }));
 };
 
 export const getFromLocalStorage = (key: string): any => {
@@ -21,350 +88,187 @@ export const getFromLocalStorage = (key: string): any => {
   return data ? JSON.parse(data) : null;
 };
 
-// Initialize default data
-const initializeDefaultData = () => {
-  // Default users
-  const defaultUsers: User[] = [
-    {
-      id: '1',
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin',
-      name: 'Dr. María González',
-      email: 'admin@hospital.com',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      username: 'cliente',
-      password: 'cliente123',
-      role: 'patient',
-      name: 'Juan Carlos Pérez',
-      email: 'cliente@email.com',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      username: 'medico',
-      password: 'medico123',
-      role: 'medical_staff',
-      name: 'Dr. Ana Rodríguez',
-      email: 'medico@hospital.com',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  // Default specialties
-  const defaultSpecialties: Specialty[] = [
-    {
-      id: '1',
-      name: 'Cardiología',
-      description: 'Especialidad médica que se encarga del estudio, diagnóstico y tratamiento de las enfermedades del corazón',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      name: 'Pediatría',
-      description: 'Especialidad médica que estudia al niño y sus enfermedades',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      name: 'Dermatología',
-      description: 'Especialidad médica que se encarga del estudio de la piel y sus enfermedades',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  // Default patients
-  const defaultPatients: Patient[] = [
-    {
-      id: '1',
-      identificationNumber: '12345678A',
-      name: 'Juan Carlos Pérez',
-      email: 'cliente@email.com',
-      phone: '+34 666 123 456',
-      dateOfBirth: '1985-03-15',
-      address: 'Calle Mayor 123, Madrid',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  // Default medical staff
-  const defaultMedicalStaff: MedicalStaff[] = [
-    {
-      id: '1',
-      identificationNumber: '87654321B',
-      name: 'Dr. Ana Rodríguez',
-      email: 'medico@hospital.com',
-      phone: '+34 666 789 012',
-      specialtyId: '1',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  // Default work shifts
-  const defaultWorkShifts: WorkShift[] = [
-    {
-      id: '1',
-      name: 'Turno Mañana',
-      startTime: '08:00',
-      endTime: '15:00',
-      description: 'Turno de mañana para consultas regulares',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      name: 'Turno Tarde',
-      startTime: '15:00',
-      endTime: '22:00',
-      description: 'Turno de tarde para consultas y urgencias',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  // Initialize data if not exists
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(defaultUsers));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SPECIALTIES)) {
-    localStorage.setItem(STORAGE_KEYS.SPECIALTIES, JSON.stringify(defaultSpecialties));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.PATIENTS)) {
-    localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(defaultPatients));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.MEDICAL_STAFF)) {
-    localStorage.setItem(STORAGE_KEYS.MEDICAL_STAFF, JSON.stringify(defaultMedicalStaff));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.WORK_SHIFTS)) {
-    localStorage.setItem(STORAGE_KEYS.WORK_SHIFTS, JSON.stringify(defaultWorkShifts));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.WORK_SCHEDULES)) {
-    localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify([]));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) {
-    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
-  }
-};
-
-// Initialize default data on load
-initializeDefaultData();
-
-// Users
-export const getUsers = (): User[] => {
-  const users = localStorage.getItem(STORAGE_KEYS.USERS);
-  return users ? JSON.parse(users) : [];
-};
-
-export const saveUser = (user: User): void => {
-  const users = getUsers();
-  const existingIndex = users.findIndex(u => u.id === user.id);
-  
-  if (existingIndex >= 0) {
-    users[existingIndex] = user;
-  } else {
-    users.push(user);
-  }
-  
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-};
-
-export const deleteUser = (userId: string): void => {
-  const users = getUsers().filter(u => u.id !== userId);
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-};
-
-// Patients
+// Patients functions
 export const getPatients = (): Patient[] => {
-  const patients = localStorage.getItem(STORAGE_KEYS.PATIENTS);
-  return patients ? JSON.parse(patients) : [];
+  return getFromLocalStorage('patients') || [];
+};
+
+export const savePatients = (patients: Patient[]): void => {
+  saveToLocalStorage('patients', patients);
 };
 
 export const savePatient = (patient: Patient): void => {
   const patients = getPatients();
   const existingIndex = patients.findIndex(p => p.id === patient.id);
-  
   if (existingIndex >= 0) {
     patients[existingIndex] = patient;
   } else {
     patients.push(patient);
   }
-  
-  localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+  savePatients(patients);
 };
 
-export const savePatients = (patients: Patient[]): void => {
-  localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
-};
-
-export const deletePatient = (patientId: string): void => {
-  const patients = getPatients().filter(p => p.id !== patientId);
-  localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
-};
-
-// Medical Staff
+// Medical Staff functions
 export const getMedicalStaff = (): MedicalStaff[] => {
-  const staff = localStorage.getItem(STORAGE_KEYS.MEDICAL_STAFF);
-  return staff ? JSON.parse(staff) : [];
+  return getFromLocalStorage('medicalStaff') || [];
 };
 
 export const saveMedicalStaff = (staff: MedicalStaff[]): void => {
-  localStorage.setItem(STORAGE_KEYS.MEDICAL_STAFF, JSON.stringify(staff));
+  saveToLocalStorage('medicalStaff', staff);
 };
 
-export const deleteMedicalStaff = (staffId: string): void => {
-  const staff = getMedicalStaff().filter(s => s.id !== staffId);
-  localStorage.setItem(STORAGE_KEYS.MEDICAL_STAFF, JSON.stringify(staff));
+export const saveMedicalStaffMember = (staffMember: MedicalStaff): void => {
+  const staff = getMedicalStaff();
+  const existingIndex = staff.findIndex(s => s.id === staffMember.id);
+  if (existingIndex >= 0) {
+    staff[existingIndex] = staffMember;
+  } else {
+    staff.push(staffMember);
+  }
+  saveMedicalStaff(staff);
 };
 
-// Specialties
+// Specialties functions
 export const getSpecialties = (): Specialty[] => {
-  const specialties = localStorage.getItem(STORAGE_KEYS.SPECIALTIES);
-  return specialties ? JSON.parse(specialties) : [];
+  return getFromLocalStorage('specialties') || [];
+};
+
+export const saveSpecialties = (specialties: Specialty[]): void => {
+  saveToLocalStorage('specialties', specialties);
 };
 
 export const saveSpecialty = (specialty: Specialty): void => {
   const specialties = getSpecialties();
   const existingIndex = specialties.findIndex(s => s.id === specialty.id);
-  
   if (existingIndex >= 0) {
     specialties[existingIndex] = specialty;
   } else {
     specialties.push(specialty);
   }
-  
-  localStorage.setItem(STORAGE_KEYS.SPECIALTIES, JSON.stringify(specialties));
+  saveSpecialties(specialties);
 };
 
-export const saveSpecialties = (specialties: Specialty[]): void => {
-  localStorage.setItem(STORAGE_KEYS.SPECIALTIES, JSON.stringify(specialties));
-};
-
-export const deleteSpecialty = (specialtyId: string): void => {
-  const specialties = getSpecialties().filter(s => s.id !== specialtyId);
-  localStorage.setItem(STORAGE_KEYS.SPECIALTIES, JSON.stringify(specialties));
-};
-
-// Work Shifts
+// Work Shifts functions
 export const getWorkShifts = (): WorkShift[] => {
-  const shifts = localStorage.getItem(STORAGE_KEYS.WORK_SHIFTS);
-  return shifts ? JSON.parse(shifts) : [];
+  return getFromLocalStorage('workShifts') || [];
+};
+
+export const saveWorkShifts = (shifts: WorkShift[]): void => {
+  saveToLocalStorage('workShifts', shifts);
 };
 
 export const saveWorkShift = (shift: WorkShift): void => {
   const shifts = getWorkShifts();
   const existingIndex = shifts.findIndex(s => s.id === shift.id);
-  
   if (existingIndex >= 0) {
     shifts[existingIndex] = shift;
   } else {
     shifts.push(shift);
   }
-  
-  localStorage.setItem(STORAGE_KEYS.WORK_SHIFTS, JSON.stringify(shifts));
+  saveWorkShifts(shifts);
 };
 
-export const saveWorkShifts = (shifts: WorkShift[]): void => {
-  localStorage.setItem(STORAGE_KEYS.WORK_SHIFTS, JSON.stringify(shifts));
-};
-
-export const deleteWorkShift = (shiftId: string): void => {
-  const shifts = getWorkShifts().filter(s => s.id !== shiftId);
-  localStorage.setItem(STORAGE_KEYS.WORK_SHIFTS, JSON.stringify(shifts));
-};
-
-// Work Schedules
+// Work Schedules functions
 export const getWorkSchedules = (): WorkSchedule[] => {
-  const schedules = localStorage.getItem(STORAGE_KEYS.WORK_SCHEDULES);
-  return schedules ? JSON.parse(schedules) : [];
+  return getFromLocalStorage('workSchedules') || [];
+};
+
+export const saveWorkSchedules = (schedules: WorkSchedule[]): void => {
+  saveToLocalStorage('workSchedules', schedules);
 };
 
 export const saveWorkSchedule = (schedule: WorkSchedule): void => {
   const schedules = getWorkSchedules();
   const existingIndex = schedules.findIndex(s => s.id === schedule.id);
-  
   if (existingIndex >= 0) {
     schedules[existingIndex] = schedule;
   } else {
     schedules.push(schedule);
   }
-  
-  localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify(schedules));
+  saveWorkSchedules(schedules);
 };
 
-export const saveWorkSchedules = (schedules: WorkSchedule[]): void => {
-  localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify(schedules));
-};
-
-export const deleteWorkSchedule = (scheduleId: string): void => {
-  const schedules = getWorkSchedules().filter(s => s.id !== scheduleId);
-  localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify(schedules));
-};
-
-// Appointments
+// Appointments functions
 export const getAppointments = (): Appointment[] => {
-  const appointments = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
-  return appointments ? JSON.parse(appointments) : [];
+  return getFromLocalStorage('appointments') || [];
+};
+
+export const saveAppointments = (appointments: Appointment[]): void => {
+  saveToLocalStorage('appointments', appointments);
 };
 
 export const saveAppointment = (appointment: Appointment): void => {
   const appointments = getAppointments();
   const existingIndex = appointments.findIndex(a => a.id === appointment.id);
-  
   if (existingIndex >= 0) {
     appointments[existingIndex] = appointment;
   } else {
     appointments.push(appointment);
   }
-  
-  localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+  saveAppointments(appointments);
 };
 
-export const saveAppointments = (appointments: Appointment[]): void => {
-  localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+// Medical Records functions
+export interface MedicalRecord {
+  id: string;
+  patientId: string;
+  medicalStaffId: string;
+  date: string;
+  diagnosis: string;
+  treatment: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getMedicalRecords = (): MedicalRecord[] => {
+  return getFromLocalStorage('medicalRecords') || [];
 };
 
-export const deleteAppointment = (appointmentId: string): void => {
-  const appointments = getAppointments().filter(a => a.id !== appointmentId);
-  localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+export const saveMedicalRecords = (records: MedicalRecord[]): void => {
+  saveToLocalStorage('medicalRecords', records);
 };
 
-// Session management
-export const getSession = (): Session | null => {
-  const session = localStorage.getItem(STORAGE_KEYS.SESSION);
-  return session ? JSON.parse(session) : null;
+export const saveMedicalRecord = (record: MedicalRecord): void => {
+  const records = getMedicalRecords();
+  const existingIndex = records.findIndex(r => r.id === record.id);
+  if (existingIndex >= 0) {
+    records[existingIndex] = record;
+  } else {
+    records.push(record);
+  }
+  saveMedicalRecords(records);
 };
 
-export const saveSession = (session: Session): void => {
-  localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
+// Permissions functions
+export interface Permission {
+  id: string;
+  patientId: string;
+  medicalStaffId: string;
+  type: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'expired' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getPermissions = (): Permission[] => {
+  return getFromLocalStorage('permissions') || [];
 };
 
-export const clearSession = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.SESSION);
+export const savePermissions = (permissions: Permission[]): void => {
+  saveToLocalStorage('permissions', permissions);
 };
 
-// Utility functions
-export const checkAppointmentExists = (date: string, time: string, medicalStaffId: string): boolean => {
-  const appointments = getAppointments();
-  return appointments.some(appointment => 
-    appointment.date === date && 
-    appointment.time === time && 
-    appointment.medicalStaffId === medicalStaffId &&
-    appointment.status !== 'cancelled'
-  );
-};
-
-export const sendEmailNotification = (patientEmail: string, appointmentDetails: any): boolean => {
-  // Simulate email sending
-  console.log(`Sending email to ${patientEmail}:`, appointmentDetails);
-  return true;
+export const savePermission = (permission: Permission): void => {
+  const permissions = getPermissions();
+  const existingIndex = permissions.findIndex(p => p.id === permission.id);
+  if (existingIndex >= 0) {
+    permissions[existingIndex] = permission;
+  } else {
+    permissions.push(permission);
+  }
+  savePermissions(permissions);
 };

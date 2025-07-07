@@ -1,174 +1,187 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { 
-  Calendar, 
-  History, 
-  Plus, 
-  FileText, 
-  TestTube, 
-  Stethoscope, 
-  Pill, 
-  ClipboardList,
-  FileBarChart 
-} from 'lucide-react';
-import AppSidebar from '@/components/layout/AppSidebar';
-import MedicalAppointments from './MedicalAppointments';
-import CreateConsultation from './CreateConsultation';
-import MedicalHistoryComponent from './MedicalHistory';
-import MedicalExams from './MedicalExams';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Stethoscope, Calendar, FileText, Users, ClipboardList, Activity } from 'lucide-react';
 
 const MedicalDashboard: React.FC = () => {
-  const { session } = useAuth();
-  const [activeSection, setActiveSection] = useState('appointments');
+  const { session, logout } = useAuth();
 
-  const menuItems = [
+  const medicalActions = [
     {
-      id: 'appointments',
-      title: 'Citas de Hoy',
+      title: 'Citas del Día',
+      description: 'Ver agenda de citas programadas',
       icon: Calendar,
-      onClick: () => setActiveSection('appointments'),
-      isActive: activeSection === 'appointments',
+      color: 'bg-blue-500',
     },
     {
-      id: 'create-consultation',
-      title: 'Nueva Consulta',
-      icon: Plus,
-      onClick: () => setActiveSection('create-consultation'),
-      isActive: activeSection === 'create-consultation',
-    },
-    {
-      id: 'medical-history',
-      title: 'Antecedentes',
-      icon: FileText,
-      onClick: () => setActiveSection('medical-history'),
-      isActive: activeSection === 'medical-history',
-    },
-    {
-      id: 'exams',
-      title: 'Exámenes',
-      icon: TestTube,
-      onClick: () => setActiveSection('exams'),
-      isActive: activeSection === 'exams',
-    },
-    {
-      id: 'diagnosis',
-      title: 'Diagnósticos',
-      icon: Stethoscope,
-      onClick: () => setActiveSection('diagnosis'),
-      isActive: activeSection === 'diagnosis',
-    },
-    {
-      id: 'paraclinical',
-      title: 'Servicios Paraclínicos',
+      title: 'Crear Consulta',
+      description: 'Registrar nueva consulta médica',
       icon: ClipboardList,
-      onClick: () => setActiveSection('paraclinical'),
-      isActive: activeSection === 'paraclinical',
+      color: 'bg-green-500',
     },
     {
-      id: 'treatment',
-      title: 'Tratamientos',
-      icon: Pill,
-      onClick: () => setActiveSection('treatment'),
-      isActive: activeSection === 'treatment',
+      title: 'Historial Médico',
+      description: 'Consultar historiales de pacientes',
+      icon: FileText,
+      color: 'bg-purple-500',
     },
     {
-      id: 'reports',
+      title: 'Mis Pacientes',
+      description: 'Gestionar pacientes asignados',
+      icon: Users,
+      color: 'bg-orange-500',
+    },
+    {
+      title: 'Exámenes',
+      description: 'Revisar resultados de exámenes',
+      icon: Activity,
+      color: 'bg-red-500',
+    },
+    {
       title: 'Reportes',
-      icon: FileBarChart,
-      onClick: () => setActiveSection('reports'),
-      isActive: activeSection === 'reports',
-    },
-    {
-      id: 'history',
-      title: 'Historial de Citas',
-      icon: History,
-      onClick: () => setActiveSection('history'),
-      isActive: activeSection === 'history',
+      description: 'Generar reportes médicos',
+      icon: FileText,
+      color: 'bg-indigo-500',
     },
   ];
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'appointments':
-        return <MedicalAppointments />;
-      case 'create-consultation':
-        return <CreateConsultation />;
-      case 'medical-history':
-        return <MedicalHistoryComponent />;
-      case 'exams':
-        return <MedicalExams />;
-      case 'diagnosis':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">Diagnósticos</h2>
-            <p className="text-blue-600">Sección en desarrollo - Gestión de diagnósticos médicos</p>
-          </div>
-        );
-      case 'paraclinical':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">Servicios Paraclínicos</h2>
-            <p className="text-blue-600">Sección en desarrollo - Gestión de servicios paraclínicos</p>
-          </div>
-        );
-      case 'treatment':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">Tratamientos</h2>
-            <p className="text-blue-600">Sección en desarrollo - Gestión de tratamientos médicos</p>
-          </div>
-        );
-      case 'reports':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">Reportes de Historia Clínica</h2>
-            <p className="text-blue-600">Sección en desarrollo - Generación de reportes médicos</p>
-          </div>
-        );
-      case 'history':
-        return <MedicalAppointments showHistory={true} />;
-      default:
-        return <MedicalAppointments />;
+  const todayAppointments = [
+    {
+      time: '09:00',
+      patient: 'María González',
+      type: 'Consulta General',
+      status: 'Pendiente'
+    },
+    {
+      time: '10:30',
+      patient: 'Carlos Rodríguez',
+      type: 'Control',
+      status: 'En Curso'
+    },
+    {
+      time: '11:00',
+      patient: 'Ana Martínez',
+      type: 'Primera Vez',
+      status: 'Pendiente'
     }
-  };
+  ];
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-white">
-        <AppSidebar menuItems={menuItems} title="Panel Médico" />
-        
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Header with sidebar trigger */}
-          <header className="bg-white shadow-sm border-b border-blue-100 p-3 lg:p-4 xl:p-6 shrink-0">
-            <div className="flex items-center space-x-3 lg:space-x-4">
-              <SidebarTrigger className="lg:hidden shrink-0 h-9 w-9" />
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold text-blue-900 truncate">
-                  Bienvenido/a, {session?.name}
-                </h1>
-                <p className="text-blue-600 mt-1 text-sm lg:text-base hidden sm:block">
-                  Panel médico - Gestiona tus citas y pacientes
-                </p>
-                <p className="text-blue-600 mt-1 text-xs sm:hidden">
-                  Panel médico
-                </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <Stethoscope className="h-8 w-8 text-purple-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-purple-900">Portal Médico</h1>
+                <p className="text-purple-600">Bienvenido/a, {session?.name}</p>
               </div>
             </div>
-          </header>
+            <Button onClick={logout} variant="outline" className="text-purple-600">
+              Cerrar Sesión
+            </Button>
+          </div>
+        </div>
+      </div>
 
-          {/* Content */}
-          <div className="flex-1 p-3 lg:p-4 xl:p-6 overflow-auto">
-            <div className="max-w-full h-full">
-              <div className="bg-white rounded-lg shadow-lg h-full overflow-hidden">
-                {renderContent()}
-              </div>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Actions */}
+          <div className="lg:col-span-2">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-purple-900 mb-2">Herramientas Médicas</h2>
+              <p className="text-purple-600">Gestiona tu práctica médica</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {medicalActions.map((action, index) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${action.color}`}>
+                        <action.icon className="h-5 w-5 text-white" />
+                      </div>
+                      <CardTitle className="text-sm text-purple-900">{action.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-xs text-purple-600">
+                      {action.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
-        </main>
+
+          {/* Today's Schedule */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-purple-900 flex items-center space-x-2">
+                  <Calendar className="h-5 w-5" />
+                  <span>Agenda de Hoy</span>
+                </CardTitle>
+                <CardDescription>
+                  {new Date().toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {todayAppointments.map((appointment, index) => (
+                  <div key={index} className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="text-sm font-medium text-purple-900">
+                        {appointment.time}
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        appointment.status === 'En Curso'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {appointment.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-purple-800 font-medium">{appointment.patient}</div>
+                    <div className="text-xs text-purple-600">{appointment.type}</div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg text-purple-900">Estadísticas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-purple-600">Pacientes Hoy</span>
+                  <span className="text-sm font-medium text-purple-900">12</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-purple-600">Consultas Mes</span>
+                  <span className="text-sm font-medium text-purple-900">145</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-purple-600">Pacientes Activos</span>
+                  <span className="text-sm font-medium text-purple-900">89</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 

@@ -1,210 +1,156 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { Users, Calendar, Settings, Clock, CalendarDays, Stethoscope, FileText, ClipboardList, TestTube, History, Download, Building, TrendingUp } from 'lucide-react';
-import AppSidebar from '@/components/layout/AppSidebar';
-import PatientList from '@/components/patients/PatientList';
-import StaffList from '@/components/staff/StaffList';
-import AppointmentList from '@/components/appointments/AppointmentList';
-import SpecialtyList from '@/components/specialties/SpecialtyList';
-import WorkShiftList from '@/components/shifts/WorkShiftList';
-import WorkScheduleList from '@/components/schedules/WorkScheduleList';
-import CreateConsultation from '@/components/medical-dashboard/CreateConsultation';
-import MedicalHistory from '@/components/medical-dashboard/MedicalHistory';
-import MedicalExams from '@/components/medical-dashboard/MedicalExams';
-import MedicalPermissions from '@/components/medical-dashboard/MedicalPermissions';
-import MedicalAppointments from '@/components/medical-dashboard/MedicalAppointments';
-import MedicalRecordDownload from '@/components/medical-dashboard/MedicalRecordDownload';
-import HospitalSettings from '@/components/settings/HospitalSettings';
-import HospitalStatistics from '@/components/statistics/HospitalStatistics';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Users, Calendar, Stethoscope, Settings, BarChart3, Shield, FileText, Printer } from 'lucide-react';
+import ReportsAndPermissions from '@/components/admin/ReportsAndPermissions';
 
 const Dashboard: React.FC = () => {
-  const { session } = useAuth();
-  const [activeSection, setActiveSection] = useState('patients');
+  const { session, logout } = useAuth();
+  const [activeView, setActiveView] = useState<'dashboard' | 'reports'>('dashboard');
 
-  // Only admin should see the full admin dashboard
-  if (session?.role !== 'admin') {
-    return null;
-  }
-
-  const menuItems = [
-    // Gestión General
+  const adminActions = [
     {
-      id: 'patients',
-      title: 'Pacientes',
+      title: 'Gestión de Usuarios',
+      description: 'Administrar pacientes y personal médico',
       icon: Users,
-      onClick: () => setActiveSection('patients'),
-      isActive: activeSection === 'patients',
+      color: 'bg-blue-500',
+      action: () => console.log('Gestión de usuarios'),
     },
     {
-      id: 'staff',
-      title: 'Personal Médico',
-      icon: Stethoscope,
-      onClick: () => setActiveSection('staff'),
-      isActive: activeSection === 'staff',
-    },
-    {
-      id: 'appointments',
-      title: 'Citas',
-      icon: Calendar,
-      onClick: () => setActiveSection('appointments'),
-      isActive: activeSection === 'appointments',
-    },
-    {
-      id: 'specialties',
-      title: 'Especialidades',
-      icon: Settings,
-      onClick: () => setActiveSection('specialties'),
-      isActive: activeSection === 'specialties',
-    },
-    {
-      id: 'shifts',
-      title: 'Turnos de Trabajo',
-      icon: Clock,
-      onClick: () => setActiveSection('shifts'),
-      isActive: activeSection === 'shifts',
-    },
-    {
-      id: 'schedules',
-      title: 'Horarios',
-      icon: CalendarDays,
-      onClick: () => setActiveSection('schedules'),
-      isActive: activeSection === 'schedules',
-    },
-    // Módulos Médicos
-    {
-      id: 'consultations',
-      title: 'Crear Consulta',
-      icon: FileText,
-      onClick: () => setActiveSection('consultations'),
-      isActive: activeSection === 'consultations',
-    },
-    {
-      id: 'medical-history',
-      title: 'Historial Médico',
-      icon: History,
-      onClick: () => setActiveSection('medical-history'),
-      isActive: activeSection === 'medical-history',
-    },
-    {
-      id: 'medical-exams',
-      title: 'Exámenes Médicos',
-      icon: TestTube,
-      onClick: () => setActiveSection('medical-exams'),
-      isActive: activeSection === 'medical-exams',
-    },
-    {
-      id: 'medical-permissions',
-      title: 'Permisos y Reposos',
-      icon: ClipboardList,
-      onClick: () => setActiveSection('medical-permissions'),
-      isActive: activeSection === 'medical-permissions',
-    },
-    {
-      id: 'medical-appointments',
       title: 'Citas Médicas',
+      description: 'Ver y gestionar todas las citas',
+      icon: Calendar,
+      color: 'bg-green-500',
+      action: () => console.log('Citas médicas'),
+    },
+    {
+      title: 'Especialidades',
+      description: 'Configurar especialidades médicas',
       icon: Stethoscope,
-      onClick: () => setActiveSection('medical-appointments'),
-      isActive: activeSection === 'medical-appointments',
+      color: 'bg-purple-500',
+      action: () => console.log('Especialidades'),
     },
     {
-      id: 'download-records',
-      title: 'Descargar Historias',
-      icon: Download,
-      onClick: () => setActiveSection('download-records'),
-      isActive: activeSection === 'download-records',
+      title: 'Reportes y Permisos',
+      description: 'Crear y gestionar reportes médicos y permisos',
+      icon: FileText,
+      color: 'bg-red-500',
+      action: () => setActiveView('reports'),
     },
-    // Configuración y Estadísticas
     {
-      id: 'statistics',
       title: 'Estadísticas',
-      icon: TrendingUp,
-      onClick: () => setActiveSection('statistics'),
-      isActive: activeSection === 'statistics',
+      description: 'Ver reportes y métricas del hospital',
+      icon: BarChart3,
+      color: 'bg-orange-500',
+      action: () => console.log('Estadísticas'),
     },
     {
-      id: 'hospital-settings',
       title: 'Configuración',
-      icon: Building,
-      onClick: () => setActiveSection('hospital-settings'),
-      isActive: activeSection === 'hospital-settings',
+      description: 'Configuración general del sistema',
+      icon: Settings,
+      color: 'bg-gray-500',
+      action: () => console.log('Configuración'),
     },
   ];
 
-  const renderContent = () => {
-    switch (activeSection) {
-      // Módulos de Gestión General
-      case 'patients':
-        return <PatientList />;
-      case 'staff':
-        return <StaffList />;
-      case 'appointments':
-        return <AppointmentList />;
-      case 'specialties':
-        return <SpecialtyList />;
-      case 'shifts':
-        return <WorkShiftList />;
-      case 'schedules':
-        return <WorkScheduleList />;
-      // Módulos Médicos
-      case 'consultations':
-        return <CreateConsultation />;
-      case 'medical-history':
-        return <MedicalHistory />;
-      case 'medical-exams':
-        return <MedicalExams />;
-      case 'medical-permissions':
-        return <MedicalPermissions />;
-      case 'medical-appointments':
-        return <MedicalAppointments />;
-      case 'download-records':
-        return <MedicalRecordDownload />;
-      // Configuración y Estadísticas
-      case 'statistics':
-        return <HospitalStatistics />;
-      case 'hospital-settings':
-        return <HospitalSettings />;
-      default:
-        return <PatientList />;
-    }
-  };
-
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-white">
-        <AppSidebar menuItems={menuItems} title="Panel de Administración" />
-        
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Header with sidebar trigger */}
-          <header className="bg-white shadow-sm border-b border-blue-100 p-3 lg:p-4 xl:p-6 shrink-0">
-            <div className="flex items-center space-x-3 lg:space-x-4">
-              <SidebarTrigger className="lg:hidden shrink-0 h-9 w-9" />
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold text-blue-900 truncate">
-                  Bienvenido/a, {session?.name}
-                </h1>
-                <p className="text-blue-600 mt-1 text-sm lg:text-base hidden sm:block">
-                  Sistema de gestión hospitalaria - Panel de administración completo
-                </p>
-                <p className="text-blue-600 mt-1 text-xs sm:hidden">
-                  Panel de administración
-                </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-blue-900">Panel de Administración</h1>
+                <p className="text-blue-600">Bienvenido/a, {session?.name}</p>
               </div>
             </div>
-          </header>
-
-          {/* Content */}
-          <div className="flex-1 p-3 lg:p-4 xl:p-6 overflow-auto">
-            <div className="max-w-full h-full">
-              <div className="bg-white rounded-lg shadow-lg h-full overflow-hidden">
-                {renderContent()}
-              </div>
+            <div className="flex items-center space-x-4">
+              {activeView === 'reports' && (
+                <Button 
+                  onClick={() => setActiveView('dashboard')} 
+                  variant="outline" 
+                  className="text-blue-600"
+                >
+                  Volver al Dashboard
+                </Button>
+              )}
+              <Button onClick={logout} variant="outline" className="text-blue-600">
+                Cerrar Sesión
+              </Button>
             </div>
           </div>
-        </main>
+        </div>
       </div>
-    </SidebarProvider>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeView === 'dashboard' ? (
+          <>
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-blue-900 mb-2">Acciones Administrativas</h2>
+              <p className="text-blue-600">Gestiona todos los aspectos del sistema hospitalario</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {adminActions.map((action, index) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={action.action}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${action.color}`}>
+                        <action.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <CardTitle className="text-lg text-blue-900">{action.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-blue-600">
+                      {action.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="mt-12">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">Estadísticas Rápidas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-2xl font-bold text-blue-900">0</div>
+                    <p className="text-sm text-blue-600">Pacientes Registrados</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-2xl font-bold text-green-900">0</div>
+                    <p className="text-sm text-green-600">Personal Médico</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-2xl font-bold text-purple-900">0</div>
+                    <p className="text-sm text-purple-600">Citas Hoy</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-2xl font-bold text-orange-900">0</div>
+                    <p className="text-sm text-orange-600">Especialidades</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </>
+        ) : (
+          <ReportsAndPermissions />
+        )}
+      </div>
+    </div>
   );
 };
 
